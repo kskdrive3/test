@@ -1,4 +1,4 @@
--- ULTRA-COMPACT PET AUTOLOAD GUI (FINAL)
+-- ULTRA-COMPACT PET AUTOLOAD GUI (FINAL) WITH MODERN ICON MINIMIZE 🤭
 local player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
@@ -131,7 +131,6 @@ StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
 StatusLabel.Text = "Status: Idle"
 StatusLabel.Parent = loadoutFrame
 
--- Buttons
 local function createSmallBtn(text,posX,color)
     local b = Instance.new("TextButton")
     b.Size = UDim2.new(0,50,0,16)
@@ -185,46 +184,19 @@ local target3Box = createInput("Target 3 (<=19):",76,saved.target3 or 1,"target3
 
 -- ===== Tab Logic =====
 tabPetListBtn.MouseButton1Click:Connect(function()
-    if minimized then return end
     petListFrame.Visible=true
     loadoutFrame.Visible=false
     currentTab="PetList"
 end)
 tabLoadoutBtn.MouseButton1Click:Connect(function()
-    if minimized then return end
     petListFrame.Visible=false
     loadoutFrame.Visible=true
     currentTab="Loadout"
 end)
 
--- ===== Minimize Logic =====
-local FULL_SIZE = UDim2.new(0,250,0,180)
-local MIN_SIZE = UDim2.new(0,250,0,26)
-local minimized = false
-local function setMinimize(state)
-    minimized = state
-    containerFrame.Visible = not minimized
-    mainFrame:TweenSize(minimized and MIN_SIZE or FULL_SIZE,Enum.EasingDirection.Out,Enum.EasingStyle.Quad,0.2,true)
-    minimizeBtn.Text = minimized and "+" or "-"
-end
-minimizeBtn.MouseButton1Click:Connect(function() setMinimize(not minimized) end)
-
--- ===== Loadout Functions =====
+-- ===== STATUS UPDATE =====
 local running = false
 local autoMode = saved.auto or false
-local function mapLoadout(i) if i==2 then return 3 elseif i==3 then return 2 else return i end end
-local function clickLoadout(slotNumber)
-    local mapped = mapLoadout(slotNumber)
-    local ui = player.PlayerGui:FindFirstChild("ActivePetUI")
-    if not ui then return end
-    local slot = ui.Frame.Main.PetLoadout.Main.ButtonHolder:FindFirstChild("PET_LOADOUT_"..mapped)
-    if slot then
-        local sensor = slot:FindFirstChild("SENSOR")
-        if sensor then firesignal(sensor.MouseButton1Click) end
-    end
-end
-
--- ===== Status Update =====
 local function updateStatus()
     if autoMode then
         StatusLabel.Text = "Status: Auto Mode"
@@ -301,6 +273,19 @@ layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     scrollFrame.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y)
 end)
 
+-- ===== Loadout Functions =====
+local function mapLoadout(i) if i==2 then return 3 elseif i==3 then return 2 else return i end end
+local function clickLoadout(slotNumber)
+    local mapped = mapLoadout(slotNumber)
+    local ui = player.PlayerGui:FindFirstChild("ActivePetUI")
+    if not ui then return end
+    local slot = ui.Frame.Main.PetLoadout.Main.ButtonHolder:FindFirstChild("PET_LOADOUT_"..mapped)
+    if slot then
+        local sensor = slot:FindFirstChild("SENSOR")
+        if sensor then firesignal(sensor.MouseButton1Click) end
+    end
+end
+
 -- ===== Auto-refresh & Loadout =====
 local refreshTimer = 0
 RunService.Heartbeat:Connect(function(dt)
@@ -332,4 +317,56 @@ RunService.Heartbeat:Connect(function(dt)
             end
         end
     end
+end)
+
+-- ===== MINIMIZE ICON MODERN 🤭 =====
+local icon = Instance.new("TextButton")
+icon.Size = UDim2.new(0,40,0,40)
+icon.Position = UDim2.new(0,12,0.45,0)
+icon.Text = "🤭"
+icon.Font = Enum.Font.GothamBold
+icon.TextSize = 18
+icon.TextColor3 = Color3.fromRGB(30,30,30)
+icon.BackgroundColor3 = Color3.fromRGB(255,240,220)
+icon.Visible = false
+icon.Active = true
+icon.Draggable = true
+icon.AutoButtonColor = false
+icon.Parent = screenGui
+
+-- Rounded corners
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(1,0)
+corner.Parent = icon
+
+-- Lingkaran border dekoratif
+local borderCircle = Instance.new("Frame")
+borderCircle.Size = UDim2.new(1,4,1,4)
+borderCircle.Position = UDim2.new(0,-2,0,-2)
+borderCircle.BackgroundColor3 = Color3.fromRGB(255,150,100)
+borderCircle.BackgroundTransparency = 0.5
+borderCircle.ZIndex = icon.ZIndex - 1
+borderCircle.Parent = icon
+local borderCorner = Instance.new("UICorner")
+borderCorner.CornerRadius = UDim.new(1,0)
+borderCorner.Parent = borderCircle
+
+-- Hover effect
+icon.MouseEnter:Connect(function()
+    icon.BackgroundColor3 = Color3.fromRGB(255,230,180)
+    borderCircle.BackgroundColor3 = Color3.fromRGB(255,180,100)
+end)
+icon.MouseLeave:Connect(function()
+    icon.BackgroundColor3 = Color3.fromRGB(255,240,220)
+    borderCircle.BackgroundColor3 = Color3.fromRGB(255,150,100)
+end)
+
+-- Minimize / maximize
+minimizeBtn.MouseButton1Click:Connect(function()
+    mainFrame.Visible = false
+    icon.Visible = true
+end)
+icon.MouseButton1Click:Connect(function()
+    mainFrame.Visible = true
+    icon.Visible = false
 end)
