@@ -1,0 +1,335 @@
+-- ULTRA-COMPACT PET AUTOLOAD GUI (FINAL)
+local player = game.Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
+
+-- ===== SAVE SYSTEM =====
+local SAVE_FILE = "PetAutoLoadSettings.json"
+local function saveSettings(data) if writefile then writefile(SAVE_FILE, HttpService:JSONEncode(data)) end end
+local function loadSettings() 
+    if readfile and isfile and isfile(SAVE_FILE) then
+        local ok,result = pcall(function() return HttpService:JSONDecode(readfile(SAVE_FILE)) end)
+        if ok then return result end
+    end
+    return {}
+end
+local saved = loadSettings()
+
+-- ===== GUI =====
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "PetAutoLoadGUI"
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0,250,0,180)
+mainFrame.Position = UDim2.new(0.5,-125,0.5,-90)
+mainFrame.BackgroundColor3 = Color3.fromRGB(45,45,45)
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0,10)
+
+-- ===== HEADER =====
+local headerFrame = Instance.new("Frame")
+headerFrame.Size = UDim2.new(1,0,0,26)
+headerFrame.BackgroundColor3 = Color3.fromRGB(55,55,55)
+headerFrame.Parent = mainFrame
+Instance.new("UICorner", headerFrame).CornerRadius = UDim.new(0,10)
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(0.6,0,1,0)
+titleLabel.Position = UDim2.new(0,8,0,0)
+titleLabel.Text = "Pet AutoLoad"
+titleLabel.BackgroundTransparency = 1
+titleLabel.TextColor3 = Color3.new(1,1,1)
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextSize = 12
+titleLabel.Parent = headerFrame
+
+local minimizeBtn = Instance.new("TextButton")
+minimizeBtn.Size = UDim2.new(0,20,0,20)
+minimizeBtn.Position = UDim2.new(1,-45,0,3)
+minimizeBtn.Text = "-"
+minimizeBtn.TextColor3 = Color3.new(1,1,1)
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(100,100,100)
+Instance.new("UICorner", minimizeBtn).CornerRadius = UDim.new(1,0)
+minimizeBtn.Parent = headerFrame
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0,20,0,20)
+closeBtn.Position = UDim2.new(1,-22,0,3)
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.new(1,1,1)
+closeBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(1,0)
+closeBtn.Parent = headerFrame
+closeBtn.MouseButton1Click:Connect(function() screenGui:Destroy() end)
+
+-- ===== CONTAINER =====
+local containerFrame = Instance.new("Frame")
+containerFrame.Size = UDim2.new(1,0,1,-26)
+containerFrame.Position = UDim2.new(0,0,0,26)
+containerFrame.BackgroundTransparency = 1
+containerFrame.Parent = mainFrame
+
+-- ===== Tabs =====
+local currentTab = "PetList"
+local function createTab(name,posX)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0,60,0,20)
+    btn.Position = UDim2.new(0,posX,0,0)
+    btn.Text = name
+    btn.BackgroundColor3 = Color3.fromRGB(80,80,80)
+    btn.TextColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,4)
+    btn.Parent = containerFrame
+    return btn
+end
+
+local tabPetListBtn = createTab("Pet List",5)
+local tabLoadoutBtn = createTab("Loadout",70)
+
+-- ===== Pet List Frame =====
+local petListFrame = Instance.new("Frame")
+petListFrame.Size = UDim2.new(1,0,0,100)
+petListFrame.Position = UDim2.new(0,0,0,22)
+petListFrame.BackgroundColor3 = Color3.fromRGB(55,55,55)
+petListFrame.Parent = containerFrame
+Instance.new("UICorner", petListFrame).CornerRadius = UDim.new(0,6)
+
+local scrollFrame = Instance.new("ScrollingFrame")
+scrollFrame.Size = UDim2.new(1,-4,1,-4)
+scrollFrame.Position = UDim2.new(0,2,0,2)
+scrollFrame.BackgroundTransparency = 1
+scrollFrame.ScrollBarThickness = 4
+scrollFrame.Parent = petListFrame
+
+local layout = Instance.new("UIListLayout")
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.Padding = UDim.new(0,1)
+layout.Parent = scrollFrame
+
+-- ===== Loadout Frame =====
+local loadoutFrame = Instance.new("Frame")
+loadoutFrame.Size = UDim2.new(1,0,0,100)
+loadoutFrame.Position = UDim2.new(0,0,0,22)
+loadoutFrame.BackgroundColor3 = Color3.fromRGB(65,65,65)
+loadoutFrame.Parent = containerFrame
+Instance.new("UICorner", loadoutFrame).CornerRadius = UDim.new(0,6)
+loadoutFrame.Visible = false
+
+-- ===== Status & Buttons =====
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(1,-8,0,14)
+StatusLabel.Position = UDim2.new(0,4,0,4)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.TextColor3 = Color3.fromRGB(200,200,200)
+StatusLabel.Font = Enum.Font.GothamBold
+StatusLabel.TextSize = 10
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+StatusLabel.Text = "Status: Idle"
+StatusLabel.Parent = loadoutFrame
+
+-- Buttons
+local function createSmallBtn(text,posX,color)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0,50,0,16)
+    b.Position = UDim2.new(0,posX,0,18)
+    b.Text = text
+    b.TextSize = 10
+    b.Font = Enum.Font.GothamBold
+    b.BackgroundColor3 = color
+    b.TextColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner",b).CornerRadius = UDim.new(0,4)
+    b.Parent = loadoutFrame
+    return b
+end
+
+local autoToggle = createSmallBtn(saved.auto and "AUTO ON" or "AUTO OFF",5,Color3.fromRGB(50,150,250))
+local StartBtn = createSmallBtn("START",60,Color3.fromRGB(80,180,120))
+local StopBtn = createSmallBtn("STOP",115,Color3.fromRGB(180,80,80))
+
+-- ===== Input Boxes =====
+local function createInput(labelText,posY,default,keyName)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0,120,0,14)
+    label.Position = UDim2.new(0,4,0,posY)
+    label.Text = labelText
+    label.TextColor3 = Color3.new(1,1,1)
+    label.BackgroundTransparency = 1
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.TextSize = 10
+    label.Parent = loadoutFrame
+
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(0,35,0,14)
+    box.Position = UDim2.new(0,130,0,posY)
+    box.Text = tostring(default or 1)
+    box.TextColor3 = Color3.new(1,1,1)
+    box.BackgroundColor3 = Color3.fromRGB(45,45,45)
+    box.ClearTextOnFocus = false
+    box.TextSize = 10
+    box.Parent = loadoutFrame
+
+    box.FocusLost:Connect(function()
+        saved[keyName] = tonumber(box.Text) or default
+        saveSettings(saved)
+    end)
+    return box
+end
+
+local target1Box = createInput("Target 1 (20-29):",40,saved.target1 or 3,"target1")
+local target2Box = createInput("Target 2 (30-34):",58,saved.target2 or 6,"target2")
+local target3Box = createInput("Target 3 (<=19):",76,saved.target3 or 1,"target3")
+
+-- ===== Tab Logic =====
+tabPetListBtn.MouseButton1Click:Connect(function()
+    if minimized then return end
+    petListFrame.Visible=true
+    loadoutFrame.Visible=false
+    currentTab="PetList"
+end)
+tabLoadoutBtn.MouseButton1Click:Connect(function()
+    if minimized then return end
+    petListFrame.Visible=false
+    loadoutFrame.Visible=true
+    currentTab="Loadout"
+end)
+
+-- ===== Minimize Logic =====
+local FULL_SIZE = UDim2.new(0,250,0,180)
+local MIN_SIZE = UDim2.new(0,250,0,26)
+local minimized = false
+local function setMinimize(state)
+    minimized = state
+    containerFrame.Visible = not minimized
+    mainFrame:TweenSize(minimized and MIN_SIZE or FULL_SIZE,Enum.EasingDirection.Out,Enum.EasingStyle.Quad,0.2,true)
+    minimizeBtn.Text = minimized and "+" or "-"
+end
+minimizeBtn.MouseButton1Click:Connect(function() setMinimize(not minimized) end)
+
+-- ===== Loadout Functions =====
+local running = false
+local autoMode = saved.auto or false
+local function mapLoadout(i) if i==2 then return 3 elseif i==3 then return 2 else return i end end
+local function clickLoadout(slotNumber)
+    local mapped = mapLoadout(slotNumber)
+    local ui = player.PlayerGui:FindFirstChild("ActivePetUI")
+    if not ui then return end
+    local slot = ui.Frame.Main.PetLoadout.Main.ButtonHolder:FindFirstChild("PET_LOADOUT_"..mapped)
+    if slot then
+        local sensor = slot:FindFirstChild("SENSOR")
+        if sensor then firesignal(sensor.MouseButton1Click) end
+    end
+end
+
+-- ===== Status Update =====
+local function updateStatus()
+    if autoMode then
+        StatusLabel.Text = "Status: Auto Mode"
+        StatusLabel.TextColor3 = Color3.fromRGB(50,150,250)
+    elseif running then
+        StatusLabel.Text = "Status: Running"
+        StatusLabel.TextColor3 = Color3.fromRGB(0,200,0)
+    else
+        StatusLabel.Text = "Status: Stopped"
+        StatusLabel.TextColor3 = Color3.fromRGB(200,50,50)
+    end
+end
+updateStatus()
+
+autoToggle.MouseButton1Click:Connect(function()
+    autoMode = not autoMode
+    saved.auto = autoMode
+    saveSettings(saved)
+    autoToggle.Text = autoMode and "AUTO ON" or "AUTO OFF"
+    updateStatus()
+end)
+StartBtn.MouseButton1Click:Connect(function() running=true updateStatus() end)
+StopBtn.MouseButton1Click:Connect(function() running=false updateStatus() end)
+
+-- ===== Populate Pet List =====
+local function populatePets()
+    for _,c in pairs(scrollFrame:GetChildren()) do if c:IsA("Frame") then c:Destroy() end end
+    layout.Parent = scrollFrame
+    local success, petDisplay = pcall(function()
+        return player:WaitForChild("PlayerGui"):WaitForChild("ActivePetUI")
+            :WaitForChild("Frame"):WaitForChild("Main")
+            :WaitForChild("PetDisplay"):WaitForChild("ScrollingFrame")
+    end)
+    if not success or not petDisplay then return end
+    for _,f in pairs(petDisplay:GetChildren()) do
+        if f:IsA("Frame") and f.Name:sub(1,1)=="{" then
+            local main = f:FindFirstChild("Main")
+            if main then
+                local n = main:FindFirstChild("PET_NAME")
+                local a = main:FindFirstChild("PET_AGE")
+                local t = main:FindFirstChild("PET_TYPE")
+                local nameText = n and n.Text or "Unknown"
+                local ageNumber = tonumber((a and a.Text or "0"):match("%d+")) or 0
+                if ageNumber>=70 then continue end
+                local typeText = t and t.Text or "Unknown"
+
+                local row = Instance.new("Frame")
+                row.Size = UDim2.new(1,-4,0,12)
+                row.BackgroundTransparency=1
+                row.Parent = scrollFrame
+
+                local checkbox = Instance.new("Frame")
+                checkbox.Size = UDim2.new(0,6,1,0)
+                checkbox.Position = UDim2.new(0,0,0,0)
+                checkbox.BackgroundColor3 = Color3.fromRGB(80,80,80)
+                checkbox.Parent = row
+
+                local label = Instance.new("TextLabel")
+                label.Size=UDim2.new(1,-8,1,0)
+                label.Position=UDim2.new(0,8,0,0)
+                label.Text = string.format("%s | %s | %s", nameText, ageNumber, typeText)
+                label.TextColor3 = Color3.new(1,1,1)
+                label.BackgroundTransparency=1
+                label.TextSize=9
+                label.TextXAlignment=Enum.TextXAlignment.Left
+                label.Parent=row
+            end
+        end
+    end
+    scrollFrame.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y)
+end
+populatePets()
+layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    scrollFrame.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y)
+end)
+
+-- ===== Auto-refresh & Loadout =====
+local refreshTimer = 0
+RunService.Heartbeat:Connect(function(dt)
+    refreshTimer += dt
+    if refreshTimer < 5 then return end
+    refreshTimer = 0
+    populatePets()
+    local active = running or autoMode
+    updateStatus()
+    if not active then return end
+    for _,row in pairs(scrollFrame:GetChildren()) do
+        if row:IsA("Frame") then
+            local label = row:FindFirstChildWhichIsA("TextLabel")
+            local checkbox = row:FindFirstChildWhichIsA("Frame")
+            if label and checkbox then
+                local _,ageText = label.Text:match("^(.-)%s*|%s*(%d+)%s*|")
+                local ageNumber = tonumber(ageText) or 0
+                local slot
+                if ageNumber>=20 and ageNumber<30 then slot = tonumber(target1Box.Text) or 3
+                elseif ageNumber>=30 and ageNumber<35 then slot = tonumber(target2Box.Text) or 6
+                elseif ageNumber<=19 then slot = tonumber(target3Box.Text) or 1
+                end
+                if slot then
+                    checkbox.BackgroundColor3 = Color3.fromRGB(0,180,0)
+                    clickLoadout(slot)
+                else
+                    checkbox.BackgroundColor3 = Color3.fromRGB(80,80,80)
+                end
+            end
+        end
+    end
+end)
