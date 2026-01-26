@@ -4,10 +4,16 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
 
+--// Hapus GUI lama jika ada
+local oldGui = LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("PetFinderGUI")
+if oldGui then
+	oldGui:Destroy()
+end
+
 --// GUI Setup
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "PetFinderGUI"
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") -- PERBAIKAN: sekarang di PlayerGui
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 300, 0, 280)
@@ -103,10 +109,13 @@ MinBtn.MouseButton1Click:Connect(function()
 	BtnFrame.Visible = not minimized
 	MainFrame.Size = minimized and UDim2.new(0,300,0,30) or UDim2.new(0,300,0,280)
 end)
+
 CloseBtn.MouseButton1Click:Connect(function()
 	clearResults()
 	clearESPs()
-	ScreenGui:Destroy()
+	if ScreenGui then
+		ScreenGui:Destroy()
+	end
 end)
 
 -- Functions
@@ -117,7 +126,7 @@ local function createESP(targetPlayer)
 	if ESPs[targetPlayer] then return end
 	local hrp = targetPlayer.Character.HumanoidRootPart
 	
-	-- Highlight
+	-- Highlight badan
 	local highlight = Instance.new("Highlight")
 	highlight.Adornee = targetPlayer.Character
 	highlight.FillColor = Color3.fromRGB(0,255,0)
@@ -126,7 +135,7 @@ local function createESP(targetPlayer)
 	highlight.OutlineTransparency = 0
 	highlight.Parent = targetPlayer.Character
 	
-	-- Beam
+	-- Garis dari kamera ke player
 	local att0 = Instance.new("Attachment")
 	att0.Position = Vector3.new(0,0,0)
 	att0.Parent = workspace.CurrentCamera
@@ -139,8 +148,8 @@ local function createESP(targetPlayer)
 	beam.Attachment0 = att0
 	beam.Attachment1 = att1
 	beam.Color = ColorSequence.new(Color3.fromRGB(0,255,0))
-	beam.Width0 = 0.1
-	beam.Width1 = 0.1
+	beam.Width0 = 0.05
+	beam.Width1 = 0.05
 	beam.FaceCamera = true
 	beam.Parent = hrp
 	
@@ -203,7 +212,7 @@ ClearBtn.MouseButton1Click:Connect(function()
 	SearchBox.Text = ""
 end)
 
--- Auto-update ESP ketika player baru datang / pergi
+-- Auto-update ESP ketika player baru datang / keluar
 Players.PlayerAdded:Connect(function(player)
 	player.CharacterAdded:Connect(function()
 		performSearch()
