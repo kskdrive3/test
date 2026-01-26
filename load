@@ -1,16 +1,14 @@
---// Services
+-- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
 
---// Hapus GUI lama jika ada
+-- Hapus GUI lama
 local oldGui = LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("PetFinderGUI")
-if oldGui then
-	oldGui:Destroy()
-end
+if oldGui then oldGui:Destroy() end
 
---// GUI Setup
+-- GUI Setup
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "PetFinderGUI"
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
@@ -26,8 +24,8 @@ MainFrame.Parent = ScreenGui
 -- Title
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 30)
-Title.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-Title.Text = "Pet Finder + ESP"
+Title.BackgroundColor3 = Color3.fromRGB(20,20,20)
+Title.Text = "Pet Finder + ESP Line"
 Title.TextColor3 = Color3.new(1,1,1)
 Title.Font = Enum.Font.SourceSansBold
 Title.TextSize = 16
@@ -35,8 +33,8 @@ Title.Parent = MainFrame
 
 -- Close / Minimize
 local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -30, 0, 0)
+CloseBtn.Size = UDim2.new(0,30,0,30)
+CloseBtn.Position = UDim2.new(1,-30,0,0)
 CloseBtn.Text = "X"
 CloseBtn.BackgroundColor3 = Color3.fromRGB(170,50,50)
 CloseBtn.TextColor3 = Color3.new(1,1,1)
@@ -52,16 +50,16 @@ MinBtn.Parent = MainFrame
 
 -- Search Box
 local SearchBox = Instance.new("TextBox")
-SearchBox.Size = UDim2.new(1, -20, 0, 30)
-SearchBox.Position = UDim2.new(0, 10, 0, 40)
+SearchBox.Size = UDim2.new(1,-20,0,30)
+SearchBox.Position = UDim2.new(0,10,0,40)
 SearchBox.PlaceholderText = "Nama pet..."
 SearchBox.BackgroundColor3 = Color3.fromRGB(45,45,45)
 SearchBox.TextColor3 = Color3.new(1,1,1)
 SearchBox.Parent = MainFrame
 
--- Buttons Frame
+-- Buttons
 local BtnFrame = Instance.new("Frame")
-BtnFrame.Size = UDim2.new(1, -20, 0, 30)
+BtnFrame.Size = UDim2.new(1,-20,0,30)
 BtnFrame.Position = UDim2.new(0,10,0,75)
 BtnFrame.BackgroundTransparency = 1
 BtnFrame.Parent = MainFrame
@@ -72,7 +70,6 @@ UIListButtons.HorizontalAlignment = Enum.HorizontalAlignment.Left
 UIListButtons.Padding = UDim.new(0,5)
 UIListButtons.Parent = BtnFrame
 
--- Search Button
 local SearchBtn = Instance.new("TextButton")
 SearchBtn.Size = UDim2.new(0,140,1,0)
 SearchBtn.Text = "Search"
@@ -80,7 +77,6 @@ SearchBtn.BackgroundColor3 = Color3.fromRGB(60,120,200)
 SearchBtn.TextColor3 = Color3.new(1,1,1)
 SearchBtn.Parent = BtnFrame
 
--- Clear Button
 local ClearBtn = Instance.new("TextButton")
 ClearBtn.Size = UDim2.new(0,140,1,0)
 ClearBtn.Text = "Clear"
@@ -92,15 +88,14 @@ ClearBtn.Parent = BtnFrame
 local ResultFrame = Instance.new("ScrollingFrame")
 ResultFrame.Size = UDim2.new(1,-20,1,-115)
 ResultFrame.Position = UDim2.new(0,10,0,110)
-ResultFrame.CanvasSize = UDim2.new(0,0,0,0)
-ResultFrame.ScrollBarImageTransparency = 0
 ResultFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
+ResultFrame.CanvasSize = UDim2.new(0,0,0,0)
 ResultFrame.Parent = MainFrame
 
 local UIList = Instance.new("UIListLayout", ResultFrame)
 UIList.Padding = UDim.new(0,3)
 
--- Minimize/Close Logic
+-- Minimize / Close
 local minimized = false
 MinBtn.MouseButton1Click:Connect(function()
 	minimized = not minimized
@@ -110,6 +105,16 @@ MinBtn.MouseButton1Click:Connect(function()
 	MainFrame.Size = minimized and UDim2.new(0,300,0,30) or UDim2.new(0,300,0,280)
 end)
 
+local ESPs = {}
+
+local function clearESPs()
+	for player,data in pairs(ESPs) do
+		if data.highlight then data.highlight:Destroy() end
+		if data.line then data.line:Destroy() end
+	end
+	ESPs = {}
+end
+
 CloseBtn.MouseButton1Click:Connect(function()
 	clearResults()
 	clearESPs()
@@ -118,59 +123,10 @@ CloseBtn.MouseButton1Click:Connect(function()
 	end
 end)
 
--- Functions
-local ESPs = {}
-
-local function createESP(targetPlayer)
-	if not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
-	if ESPs[targetPlayer] then return end
-	local hrp = targetPlayer.Character.HumanoidRootPart
-	
-	-- Highlight badan
-	local highlight = Instance.new("Highlight")
-	highlight.Adornee = targetPlayer.Character
-	highlight.FillColor = Color3.fromRGB(0,255,0)
-	highlight.FillTransparency = 0.5
-	highlight.OutlineColor = Color3.fromRGB(0,255,0)
-	highlight.OutlineTransparency = 0
-	highlight.Parent = targetPlayer.Character
-	
-	-- Garis dari kamera ke player
-	local att0 = Instance.new("Attachment")
-	att0.Position = Vector3.new(0,0,0)
-	att0.Parent = workspace.CurrentCamera
-	
-	local att1 = Instance.new("Attachment")
-	att1.Position = Vector3.new(0,3,0)
-	att1.Parent = hrp
-	
-	local beam = Instance.new("Beam")
-	beam.Attachment0 = att0
-	beam.Attachment1 = att1
-	beam.Color = ColorSequence.new(Color3.fromRGB(0,255,0))
-	beam.Width0 = 0.05
-	beam.Width1 = 0.05
-	beam.FaceCamera = true
-	beam.Parent = hrp
-	
-	ESPs[targetPlayer] = {highlight=highlight, beam=beam, att0=att0, att1=att1}
-end
-
-local function clearESPs()
-	for player,data in pairs(ESPs) do
-		if data.highlight then data.highlight:Destroy() end
-		if data.beam then data.beam:Destroy() end
-		if data.att0 then data.att0:Destroy() end
-		if data.att1 then data.att1:Destroy() end
-	end
-	ESPs = {}
-end
-
+-- Functions untuk add result
 local function clearResults()
-	for _, v in pairs(ResultFrame:GetChildren()) do
-		if v:IsA("TextLabel") then
-			v:Destroy()
-		end
+	for _,v in pairs(ResultFrame:GetChildren()) do
+		if v:IsA("TextLabel") then v:Destroy() end
 	end
 	ResultFrame.CanvasSize = UDim2.new(0,0,0,0)
 	clearESPs()
@@ -185,7 +141,59 @@ local function addResult(text)
 	Label.Text = text
 	Label.TextColor3 = Color3.new(1,1,1)
 	Label.Parent = ResultFrame
-	ResultFrame.CanvasSize = UDim2.new(0,0,0, UIList.AbsoluteContentSize.Y + 5)
+	ResultFrame.CanvasSize = UDim2.new(0,0,0,UIList.AbsoluteContentSize.Y + 5)
+end
+
+-- Fungsi ESP garis
+local function createESP(targetPlayer)
+	if not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
+	if ESPs[targetPlayer] then return end
+	
+	local hrp = targetPlayer.Character.HumanoidRootPart
+	
+	-- Highlight
+	local highlight = Instance.new("Highlight")
+	highlight.Adornee = targetPlayer.Character
+	highlight.FillColor = Color3.fromRGB(0,255,0)
+	highlight.FillTransparency = 0.5
+	highlight.OutlineColor = Color3.fromRGB(0,255,0)
+	highlight.OutlineTransparency = 0
+	highlight.Parent = targetPlayer.Character
+	
+	-- Line dari kita ke player pakai LineHandleAdornment
+	local linePart = Instance.new("Part")
+	linePart.Anchored = true
+	linePart.CanCollide = false
+	linePart.Transparency = 1
+	linePart.Size = Vector3.new(0.2,0.2,0.2)
+	linePart.CFrame = CFrame.new(hrp.Position)
+	linePart.Parent = Workspace
+	
+	local line = Instance.new("LineHandleAdornment")
+	line.Adornee = linePart
+	line.Color3 = Color3.fromRGB(0,255,0)
+	line.Thickness = 0.05
+	line.ZIndex = 5
+	line.AlwaysOnTop = true
+	line.Parent = linePart
+	
+	-- Update posisi tiap frame
+	local conn
+	conn = RunService.RenderStepped:Connect(function()
+		if not hrp.Parent then
+			if line then line:Destroy() end
+			if linePart then linePart:Destroy() end
+			if highlight then highlight:Destroy() end
+			if conn then conn:Disconnect() end
+			ESPs[targetPlayer] = nil
+			return
+		end
+		local camPos = Workspace.CurrentCamera.CFrame.Position
+		line.CFrame = CFrame.new((camPos+hrp.Position)/2, hrp.Position)
+		line.Size = Vector3.new(0.05,0.05,(hrp.Position - camPos).Magnitude)
+	end)
+	
+	ESPs[targetPlayer] = {highlight=highlight, line=line, conn=conn, linePart=linePart}
 end
 
 -- Search
@@ -193,10 +201,10 @@ local function performSearch()
 	clearResults()
 	local keyword = string.lower(SearchBox.Text)
 	if keyword == "" then return end
-	for _, player in pairs(Players:GetPlayers()) do
+	for _,player in pairs(Players:GetPlayers()) do
 		local backpack = player:FindFirstChild("Backpack")
 		if backpack then
-			for _, item in pairs(backpack:GetChildren()) do
+			for _,item in pairs(backpack:GetChildren()) do
 				if string.find(string.lower(item.Name), keyword) then
 					addResult("Player: "..player.Name.." | Pet: "..item.Name)
 					createESP(player)
@@ -212,7 +220,7 @@ ClearBtn.MouseButton1Click:Connect(function()
 	SearchBox.Text = ""
 end)
 
--- Auto-update ESP ketika player baru datang / keluar
+-- Auto update ESP player join/leave
 Players.PlayerAdded:Connect(function(player)
 	player.CharacterAdded:Connect(function()
 		performSearch()
@@ -223,9 +231,9 @@ Players.PlayerRemoving:Connect(function(player)
 	if ESPs[player] then
 		local data = ESPs[player]
 		if data.highlight then data.highlight:Destroy() end
-		if data.beam then data.beam:Destroy() end
-		if data.att0 then data.att0:Destroy() end
-		if data.att1 then data.att1:Destroy() end
+		if data.line then data.line:Destroy() end
+		if data.linePart then data.linePart:Destroy() end
+		if data.conn then data.conn:Disconnect() end
 		ESPs[player] = nil
 	end
 end)
