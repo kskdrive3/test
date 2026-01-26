@@ -1,16 +1,18 @@
 --// Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
 
 --// GUI Setup
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "PetFinderGUI"
+ScreenGui.Name = "PetFinderESP"
 ScreenGui.Parent = game.CoreGui
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 320, 0, 300)
-MainFrame.Position = UDim2.new(0.5, -160, 0.5, -150)
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.Size = UDim2.new(0, 320, 0, 340)
+MainFrame.Position = UDim2.new(0.5, -160, 0.5, -170)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
@@ -42,7 +44,7 @@ MinBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
 MinBtn.TextColor3 = Color3.new(1,1,1)
 MinBtn.Parent = MainFrame
 
--- TextBox
+-- Search Box
 local SearchBox = Instance.new("TextBox")
 SearchBox.Size = UDim2.new(1,-20,0,30)
 SearchBox.Position = UDim2.new(0,10,0,40)
@@ -63,10 +65,19 @@ local AutoList = Instance.new("UIListLayout")
 AutoList.Parent = AutoFrame
 AutoList.Padding = UDim.new(0,2)
 
+-- Clear Button
+local ClearBtn = Instance.new("TextButton")
+ClearBtn.Size = UDim2.new(1,-20,0,30)
+ClearBtn.Position = UDim2.new(0,10,0,180)
+ClearBtn.Text = "Clear"
+ClearBtn.BackgroundColor3 = Color3.fromRGB(150,50,50)
+ClearBtn.TextColor3 = Color3.new(1,1,1)
+ClearBtn.Parent = MainFrame
+
 -- Result Frame
 local ResultFrame = Instance.new("ScrollingFrame")
-ResultFrame.Size = UDim2.new(1,-20,1,-180)
-ResultFrame.Position = UDim2.new(0,10,0,180)
+ResultFrame.Size = UDim2.new(1,-20,1,-220)
+ResultFrame.Position = UDim2.new(0,10,0,220)
 ResultFrame.CanvasSize = UDim2.new(0,0,0,0)
 ResultFrame.ScrollBarImageTransparency = 0
 ResultFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
@@ -82,14 +93,17 @@ MinBtn.MouseButton1Click:Connect(function()
 	SearchBox.Visible = not minimized
 	AutoFrame.Visible = false
 	ResultFrame.Visible = not minimized
-	MainFrame.Size = minimized and UDim2.new(0,320,0,30) or UDim2.new(0,320,0,300)
+	ClearBtn.Visible = not minimized
+	MainFrame.Size = minimized and UDim2.new(0,320,0,30) or UDim2.new(0,320,0,340)
 end)
 
 CloseBtn.MouseButton1Click:Connect(function()
+	clearResults()
+	clearESPs()
 	ScreenGui:Destroy()
 end)
 
--- Clear / Add Result
+-- Functions
 local function clearResults()
 	for _,v in pairs(ResultFrame:GetChildren()) do
 		if v:IsA("TextLabel") then v:Destroy() end
@@ -132,34 +146,52 @@ local function buildPetList()
 	end
 end
 
--- ESP logic
-local ESPs = {} -- Player -> BillboardGui
+-- ESP Logic: Highlight + Beam
+local ESPs = {} -- Player -> {highlight, beam, attachments}
+
 local function createESP(targetPlayer)
 	if not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
 	if ESPs[targetPlayer] then return end
 	local hrp = targetPlayer.Character.HumanoidRootPart
-	local billboard = Instance.new("BillboardGui")
-	billboard.Size = UDim2.new(0,100,0,50)
-	billboard.Adornee = hrp
-	billboard.AlwaysOnTop = true
-	billboard.StudsOffset = Vector3.new(0,3,0)
-	billboard.Parent = hrp
 
-	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(1,0,1,0)
-	label.BackgroundTransparency = 1
-	label.TextColor3 = Color3.fromRGB(255,0,0)
-	label.TextStrokeTransparency = 0
-	label.TextScaled = true
-	label.Text = targetPlayer.Name
-	label.Parent = billboard
+	-- Highlight
+	local highlight = Instance.new("Highlight")
+	highlight.Adornee = targetPlayer.Character
+	highlight.FillColor = Color3.fromRGB(0,255,0)
+	highlight.FillTransparency = 0.5
+	highlight.OutlineColor = Color3.fromRGB(0,255,0)
+	highlight.OutlineTransparency = 0
+	highlight.Parent = targetPlayer.Character
 
-	ESPs[targetPlayer] = billboard
+	-- Beam
+	local att0 = Instance.new("Attachment")
+	att0.Position = Vector3.new(0,0,0)
+	att0.Parent = workspace.CurrentCamera
+
+	local att1 = Instance.new("Attachment")
+	att1.Position = Vector3.new(0,3,0)
+	att1.Parent = hrp
+
+	local beam = Instance.new("Beam")
+	beam.Attachment0 = att0
+	beam.Attachment1 = att1
+	beam.Color = ColorSequence.new(Color3.fromRGB(0,255,0))
+	beam.Width0 = 0.1
+	beam.Width1 = 0.1
+	beam.FaceCamera = true
+	beam.Parent = hrp
+
+	ESPs[targetPlayer] = {highlight=highlight, beam=beam, att0=att0, att1=att1}
 end
 
 local function clearESPs()
-	for player,billboard in pairs(ESPs) do
-		if billboard then billboard:Destroy() end
+	for player,data in pairs(ESPs) do
+		if data.highlight then data.highlight:Destroy() end
+		if data.beam then
+			data.beam:Destroy()
+			data.att0:Destroy()
+			data.att1:Destroy()
+		end
 	end
 	ESPs = {}
 end
@@ -233,14 +265,6 @@ SearchBox.FocusLost:Connect(function(enterPressed)
 end)
 
 -- Clear Button
-local ClearBtn = Instance.new("TextButton")
-ClearBtn.Size = UDim2.new(1,-20,0,30)
-ClearBtn.Position = UDim2.new(0,10,0,135)
-ClearBtn.Text = "Clear"
-ClearBtn.BackgroundColor3 = Color3.fromRGB(150,50,50)
-ClearBtn.TextColor3 = Color3.new(1,1,1)
-ClearBtn.Parent = MainFrame
-
 ClearBtn.MouseButton1Click:Connect(function()
 	clearResults()
 	clearESPs()
