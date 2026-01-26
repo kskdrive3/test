@@ -1,6 +1,6 @@
 --// Services
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
 
 --// GUI Setup
 local ScreenGui = Instance.new("ScreenGui")
@@ -8,145 +8,245 @@ ScreenGui.Name = "PetFinderGUI"
 ScreenGui.Parent = game.CoreGui
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 300, 0, 280) -- ukuran lebih compact
-MainFrame.Position = UDim2.new(0.5, -150, 0.5, -140)
+MainFrame.Size = UDim2.new(0, 320, 0, 300)
+MainFrame.Position = UDim2.new(0.5, -160, 0.5, -150)
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-MainFrame.Parent = ScreenGui
 MainFrame.Active = true
 MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
 
---// Title
+-- Title
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-Title.Text = "Pet Finder"
+Title.Size = UDim2.new(1,0,0,30)
+Title.BackgroundColor3 = Color3.fromRGB(20,20,20)
+Title.Text = "Pet Finder + ESP"
 Title.TextColor3 = Color3.new(1,1,1)
 Title.Font = Enum.Font.SourceSansBold
 Title.TextSize = 16
 Title.Parent = MainFrame
 
---// Close Button
+-- Close / Minimize
 local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -30, 0, 0)
+CloseBtn.Size = UDim2.new(0,30,0,30)
+CloseBtn.Position = UDim2.new(1,-30,0,0)
 CloseBtn.Text = "X"
-CloseBtn.BackgroundColor3 = Color3.fromRGB(170, 50, 50)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(170,50,50)
 CloseBtn.TextColor3 = Color3.new(1,1,1)
 CloseBtn.Parent = MainFrame
 
---// Minimize Button
 local MinBtn = Instance.new("TextButton")
-MinBtn.Size = UDim2.new(0, 30, 0, 30)
-MinBtn.Position = UDim2.new(1, -60, 0, 0)
+MinBtn.Size = UDim2.new(0,30,0,30)
+MinBtn.Position = UDim2.new(1,-60,0,0)
 MinBtn.Text = "-"
-MinBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+MinBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
 MinBtn.TextColor3 = Color3.new(1,1,1)
 MinBtn.Parent = MainFrame
 
---// Search Box
+-- TextBox
 local SearchBox = Instance.new("TextBox")
-SearchBox.Size = UDim2.new(1, -20, 0, 30)
-SearchBox.Position = UDim2.new(0, 10, 0, 40)
-SearchBox.PlaceholderText = "Nama pet..."
-SearchBox.Text = ""
-SearchBox.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+SearchBox.Size = UDim2.new(1,-20,0,30)
+SearchBox.Position = UDim2.new(0,10,0,40)
+SearchBox.PlaceholderText = "Ketik nama pet..."
+SearchBox.BackgroundColor3 = Color3.fromRGB(45,45,45)
 SearchBox.TextColor3 = Color3.new(1,1,1)
 SearchBox.Parent = MainFrame
 
---// Buttons Frame
-local BtnFrame = Instance.new("Frame")
-BtnFrame.Size = UDim2.new(1, -20, 0, 30)
-BtnFrame.Position = UDim2.new(0, 10, 0, 75)
-BtnFrame.BackgroundTransparency = 1
-BtnFrame.Parent = MainFrame
+-- Autocomplete Frame
+local AutoFrame = Instance.new("Frame")
+AutoFrame.Size = UDim2.new(1,-20,0,100)
+AutoFrame.Position = UDim2.new(0,10,0,75)
+AutoFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
+AutoFrame.Visible = false
+AutoFrame.Parent = MainFrame
 
-local UIListButtons = Instance.new("UIListLayout")
-UIListButtons.FillDirection = Enum.FillDirection.Horizontal
-UIListButtons.HorizontalAlignment = Enum.HorizontalAlignment.Left
-UIListButtons.Padding = UDim.new(0, 5)
-UIListButtons.Parent = BtnFrame
+local AutoList = Instance.new("UIListLayout")
+AutoList.Parent = AutoFrame
+AutoList.Padding = UDim.new(0,2)
 
---// Search Button
-local SearchBtn = Instance.new("TextButton")
-SearchBtn.Size = UDim2.new(0, 140, 1, 0)
-SearchBtn.Text = "Search"
-SearchBtn.BackgroundColor3 = Color3.fromRGB(60, 120, 200)
-SearchBtn.TextColor3 = Color3.new(1,1,1)
-SearchBtn.Parent = BtnFrame
-
---// Clear Button
-local ClearBtn = Instance.new("TextButton")
-ClearBtn.Size = UDim2.new(0, 140, 1, 0)
-ClearBtn.Text = "Clear"
-ClearBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
-ClearBtn.TextColor3 = Color3.new(1,1,1)
-ClearBtn.Parent = BtnFrame
-
---// Result List
+-- Result Frame
 local ResultFrame = Instance.new("ScrollingFrame")
-ResultFrame.Size = UDim2.new(1, -20, 1, -115)
-ResultFrame.Position = UDim2.new(0, 10, 0, 110)
+ResultFrame.Size = UDim2.new(1,-20,1,-180)
+ResultFrame.Position = UDim2.new(0,10,0,180)
 ResultFrame.CanvasSize = UDim2.new(0,0,0,0)
 ResultFrame.ScrollBarImageTransparency = 0
-ResultFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+ResultFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
 ResultFrame.Parent = MainFrame
 
 local UIList = Instance.new("UIListLayout", ResultFrame)
-UIList.Padding = UDim.new(0, 3)
+UIList.Padding = UDim.new(0,3)
 
---// Functions
+-- Close/Minimize Logic
 local minimized = false
 MinBtn.MouseButton1Click:Connect(function()
 	minimized = not minimized
-	ResultFrame.Visible = not minimized
 	SearchBox.Visible = not minimized
-	BtnFrame.Visible = not minimized
-	MainFrame.Size = minimized and UDim2.new(0, 300, 0, 30) or UDim2.new(0, 300, 0, 280)
+	AutoFrame.Visible = false
+	ResultFrame.Visible = not minimized
+	MainFrame.Size = minimized and UDim2.new(0,320,0,30) or UDim2.new(0,320,0,300)
 end)
 
 CloseBtn.MouseButton1Click:Connect(function()
 	ScreenGui:Destroy()
 end)
 
+-- Clear / Add Result
 local function clearResults()
-	for _, v in pairs(ResultFrame:GetChildren()) do
-		if v:IsA("TextLabel") then
-			v:Destroy()
-		end
+	for _,v in pairs(ResultFrame:GetChildren()) do
+		if v:IsA("TextLabel") then v:Destroy() end
 	end
 	ResultFrame.CanvasSize = UDim2.new(0,0,0,0)
 end
 
 local function addResult(text)
 	local Label = Instance.new("TextLabel")
-	Label.Size = UDim2.new(1, -10, 0, 25)
-	Label.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+	Label.Size = UDim2.new(1,-10,0,25)
+	Label.BackgroundColor3 = Color3.fromRGB(50,50,50)
 	Label.TextWrapped = true
 	Label.TextXAlignment = Enum.TextXAlignment.Left
 	Label.Text = text
 	Label.TextColor3 = Color3.new(1,1,1)
 	Label.Parent = ResultFrame
-
-	ResultFrame.CanvasSize = UDim2.new(0,0,0, UIList.AbsoluteContentSize.Y + 5)
+	ResultFrame.CanvasSize = UDim2.new(0,0,0,UIList.AbsoluteContentSize.Y + 5)
 end
 
---// Search Logic
-local function performSearch()
-	clearResults()
-	local keyword = string.lower(SearchBox.Text)
-	if keyword == "" then return end
+-- Build pet list
+local allPetsFront = {} -- front name (without [..])
+local allPetsFull = {} -- front name -> list full names
 
-	for _, player in pairs(Players:GetPlayers()) do
+local function buildPetList()
+	allPetsFront = {}
+	allPetsFull = {}
+	for _,player in pairs(Players:GetPlayers()) do
 		local backpack = player:FindFirstChild("Backpack")
 		if backpack then
-			for _, item in pairs(backpack:GetChildren()) do
-				if string.find(string.lower(item.Name), keyword) then
-					addResult("Player: "..player.Name.." | Pet: "..item.Name)
+			for _,item in pairs(backpack:GetChildren()) do
+				local fullName = item.Name
+				local nameFront = fullName:match("^[^%[]+"):gsub("%s+$","")
+				if not allPetsFront[nameFront] then
+					allPetsFront[nameFront] = true
+					allPetsFull[nameFront] = {}
+				end
+				table.insert(allPetsFull[nameFront], fullName)
+			end
+		end
+	end
+end
+
+-- ESP logic
+local ESPs = {} -- Player -> BillboardGui
+local function createESP(targetPlayer)
+	if not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
+	if ESPs[targetPlayer] then return end
+	local hrp = targetPlayer.Character.HumanoidRootPart
+	local billboard = Instance.new("BillboardGui")
+	billboard.Size = UDim2.new(0,100,0,50)
+	billboard.Adornee = hrp
+	billboard.AlwaysOnTop = true
+	billboard.StudsOffset = Vector3.new(0,3,0)
+	billboard.Parent = hrp
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(1,0,1,0)
+	label.BackgroundTransparency = 1
+	label.TextColor3 = Color3.fromRGB(255,0,0)
+	label.TextStrokeTransparency = 0
+	label.TextScaled = true
+	label.Text = targetPlayer.Name
+	label.Parent = billboard
+
+	ESPs[targetPlayer] = billboard
+end
+
+local function clearESPs()
+	for player,billboard in pairs(ESPs) do
+		if billboard then billboard:Destroy() end
+	end
+	ESPs = {}
+end
+
+-- Autocomplete logic
+local function showAutocomplete(keyword)
+	for _,v in pairs(AutoFrame:GetChildren()) do
+		if v:IsA("TextButton") then v:Destroy() end
+	end
+	if keyword == "" then
+		AutoFrame.Visible = false
+		return
+	end
+	local count = 0
+	for nameFront,_ in pairs(allPetsFront) do
+		if string.find(string.lower(nameFront), string.lower(keyword)) then
+			local btn = Instance.new("TextButton")
+			btn.Size = UDim2.new(1,-4,0,25)
+			btn.Text = nameFront
+			btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+			btn.TextColor3 = Color3.new(1,1,1)
+			btn.TextXAlignment = Enum.TextXAlignment.Left
+			btn.Parent = AutoFrame
+			btn.MouseButton1Click:Connect(function()
+				SearchBox.Text = nameFront
+				AutoFrame.Visible = false
+				performSearch()
+			end)
+			count = count + 1
+			if count >= 5 then break end
+		end
+	end
+	AutoFrame.Visible = count>0
+end
+
+-- Search function
+function performSearch()
+	clearResults()
+	clearESPs()
+	local keyword = string.lower(SearchBox.Text)
+	if keyword == "" then return end
+	for frontName, fullNames in pairs(allPetsFull) do
+		if string.find(string.lower(frontName), keyword) then
+			for _,fullName in pairs(fullNames) do
+				for _,player in pairs(Players:GetPlayers()) do
+					local backpack = player:FindFirstChild("Backpack")
+					if backpack then
+						for _,item in pairs(backpack:GetChildren()) do
+							if item.Name == fullName then
+								addResult("Player: "..player.Name.." | Pet: "..fullName)
+								createESP(player)
+							end
+						end
+					end
 				end
 			end
 		end
 	end
 end
 
-SearchBtn.MouseButton1Click:Connect(performSearch)
-ClearBtn.MouseButton1Click:Connect(clearResults)
+-- TextBox events
+SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+	showAutocomplete(SearchBox.Text)
+end)
+
+SearchBox.FocusLost:Connect(function(enterPressed)
+	if enterPressed then
+		AutoFrame.Visible = false
+		performSearch()
+	end
+end)
+
+-- Clear Button
+local ClearBtn = Instance.new("TextButton")
+ClearBtn.Size = UDim2.new(1,-20,0,30)
+ClearBtn.Position = UDim2.new(0,10,0,135)
+ClearBtn.Text = "Clear"
+ClearBtn.BackgroundColor3 = Color3.fromRGB(150,50,50)
+ClearBtn.TextColor3 = Color3.new(1,1,1)
+ClearBtn.Parent = MainFrame
+
+ClearBtn.MouseButton1Click:Connect(function()
+	clearResults()
+	clearESPs()
+	SearchBox.Text = ""
+	AutoFrame.Visible = false
+end)
+
+-- Init
+buildPetList()
