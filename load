@@ -1,10 +1,120 @@
---// Tambahkan di atas / dekat bagian fungsi performSearch
-local ESPs = {} -- simpan semua highlight/beam
+--// Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+--// GUI Setup
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "PetFinderGUI"
+ScreenGui.Parent = game.CoreGui
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 300, 0, 280)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -140)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.Parent = ScreenGui
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+-- Title
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Title.Text = "Pet Finder + ESP"
+Title.TextColor3 = Color3.new(1,1,1)
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 16
+Title.Parent = MainFrame
+
+-- Close / Minimize
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -30, 0, 0)
+CloseBtn.Text = "X"
+CloseBtn.BackgroundColor3 = Color3.fromRGB(170,50,50)
+CloseBtn.TextColor3 = Color3.new(1,1,1)
+CloseBtn.Parent = MainFrame
+
+local MinBtn = Instance.new("TextButton")
+MinBtn.Size = UDim2.new(0,30,0,30)
+MinBtn.Position = UDim2.new(1,-60,0,0)
+MinBtn.Text = "-"
+MinBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+MinBtn.TextColor3 = Color3.new(1,1,1)
+MinBtn.Parent = MainFrame
+
+-- Search Box
+local SearchBox = Instance.new("TextBox")
+SearchBox.Size = UDim2.new(1, -20, 0, 30)
+SearchBox.Position = UDim2.new(0, 10, 0, 40)
+SearchBox.PlaceholderText = "Nama pet..."
+SearchBox.BackgroundColor3 = Color3.fromRGB(45,45,45)
+SearchBox.TextColor3 = Color3.new(1,1,1)
+SearchBox.Parent = MainFrame
+
+-- Buttons Frame
+local BtnFrame = Instance.new("Frame")
+BtnFrame.Size = UDim2.new(1, -20, 0, 30)
+BtnFrame.Position = UDim2.new(0,10,0,75)
+BtnFrame.BackgroundTransparency = 1
+BtnFrame.Parent = MainFrame
+
+local UIListButtons = Instance.new("UIListLayout")
+UIListButtons.FillDirection = Enum.FillDirection.Horizontal
+UIListButtons.HorizontalAlignment = Enum.HorizontalAlignment.Left
+UIListButtons.Padding = UDim.new(0,5)
+UIListButtons.Parent = BtnFrame
+
+-- Search Button
+local SearchBtn = Instance.new("TextButton")
+SearchBtn.Size = UDim2.new(0,140,1,0)
+SearchBtn.Text = "Search"
+SearchBtn.BackgroundColor3 = Color3.fromRGB(60,120,200)
+SearchBtn.TextColor3 = Color3.new(1,1,1)
+SearchBtn.Parent = BtnFrame
+
+-- Clear Button
+local ClearBtn = Instance.new("TextButton")
+ClearBtn.Size = UDim2.new(0,140,1,0)
+ClearBtn.Text = "Clear"
+ClearBtn.BackgroundColor3 = Color3.fromRGB(150,50,50)
+ClearBtn.TextColor3 = Color3.new(1,1,1)
+ClearBtn.Parent = BtnFrame
+
+-- Result Frame
+local ResultFrame = Instance.new("ScrollingFrame")
+ResultFrame.Size = UDim2.new(1,-20,1,-115)
+ResultFrame.Position = UDim2.new(0,10,0,110)
+ResultFrame.CanvasSize = UDim2.new(0,0,0,0)
+ResultFrame.ScrollBarImageTransparency = 0
+ResultFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
+ResultFrame.Parent = MainFrame
+
+local UIList = Instance.new("UIListLayout", ResultFrame)
+UIList.Padding = UDim.new(0,3)
+
+-- Minimize/Close
+local minimized = false
+MinBtn.MouseButton1Click:Connect(function()
+	minimized = not minimized
+	ResultFrame.Visible = not minimized
+	SearchBox.Visible = not minimized
+	BtnFrame.Visible = not minimized
+	MainFrame.Size = minimized and UDim2.new(0,300,0,30) or UDim2.new(0,300,0,280)
+end)
+CloseBtn.MouseButton1Click:Connect(function()
+	clearResults()
+	clearESPs()
+	ScreenGui:Destroy()
+end)
+
+-- Functions
+local ESPs = {}
 
 local function createESP(targetPlayer)
 	if not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
-	if ESPs[targetPlayer] then return end -- sudah ada ESP
-	
+	if ESPs[targetPlayer] then return end
 	local hrp = targetPlayer.Character.HumanoidRootPart
 	
 	-- Highlight
@@ -16,7 +126,7 @@ local function createESP(targetPlayer)
 	highlight.OutlineTransparency = 0
 	highlight.Parent = targetPlayer.Character
 	
-	-- Beam dari kamera ke pemain
+	-- Beam
 	local att0 = Instance.new("Attachment")
 	att0.Position = Vector3.new(0,0,0)
 	att0.Parent = workspace.CurrentCamera
@@ -34,8 +144,7 @@ local function createESP(targetPlayer)
 	beam.FaceCamera = true
 	beam.Parent = hrp
 	
-	-- Simpan ESP supaya bisa dihapus
-	ESPs[targetPlayer] = {highlight = highlight, beam = beam, att0 = att0, att1 = att1}
+	ESPs[targetPlayer] = {highlight=highlight, beam=beam, att0=att0, att1=att1}
 end
 
 local function clearESPs()
@@ -48,29 +157,65 @@ local function clearESPs()
 	ESPs = {}
 end
 
---// Update performSearch agar bikin ESP
+local function clearResults()
+	for _, v in pairs(ResultFrame:GetChildren()) do
+		if v:IsA("TextLabel") then
+			v:Destroy()
+		end
+	end
+	ResultFrame.CanvasSize = UDim2.new(0,0,0,0)
+	clearESPs()
+end
+
+local function addResult(text)
+	local Label = Instance.new("TextLabel")
+	Label.Size = UDim2.new(1,-10,0,25)
+	Label.BackgroundColor3 = Color3.fromRGB(50,50,50)
+	Label.TextWrapped = true
+	Label.TextXAlignment = Enum.TextXAlignment.Left
+	Label.Text = text
+	Label.TextColor3 = Color3.new(1,1,1)
+	Label.Parent = ResultFrame
+	ResultFrame.CanvasSize = UDim2.new(0,0,0, UIList.AbsoluteContentSize.Y + 5)
+end
+
+-- Search
 local function performSearch()
 	clearResults()
-	clearESPs() -- bersihkan highlight lama
 	local keyword = string.lower(SearchBox.Text)
 	if keyword == "" then return end
-
 	for _, player in pairs(Players:GetPlayers()) do
 		local backpack = player:FindFirstChild("Backpack")
 		if backpack then
 			for _, item in pairs(backpack:GetChildren()) do
 				if string.find(string.lower(item.Name), keyword) then
 					addResult("Player: "..player.Name.." | Pet: "..item.Name)
-					createESP(player) -- tambahkan highlight + beam
+					createESP(player)
 				end
 			end
 		end
 	end
 end
 
--- Clear button juga bersihkan ESP
+SearchBtn.MouseButton1Click:Connect(performSearch)
 ClearBtn.MouseButton1Click:Connect(function()
 	clearResults()
-	clearESPs()
 	SearchBox.Text = ""
+end)
+
+-- Auto-update ESP jika player baru masuk / keluar
+Players.PlayerAdded:Connect(function(player)
+	RunService.RenderStepped:Wait() -- tunggu character
+	performSearch()
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+	if ESPs[player] then
+		local data = ESPs[player]
+		if data.highlight then data.highlight:Destroy() end
+		if data.beam then data.beam:Destroy() end
+		if data.att0 then data.att0:Destroy() end
+		if data.att1 then data.att1:Destroy() end
+		ESPs[player] = nil
+	end
 end)
