@@ -7,15 +7,15 @@ local LocalPlayer = Players.LocalPlayer
 --// GUI Setup
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "PetFinderGUI"
-ScreenGui.Parent = game.CoreGui
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") -- PERBAIKAN: sekarang di PlayerGui
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 300, 0, 280)
 MainFrame.Position = UDim2.new(0.5, -150, 0.5, -140)
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-MainFrame.Parent = ScreenGui
 MainFrame.Active = true
 MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
 
 -- Title
 local Title = Instance.new("TextLabel")
@@ -94,7 +94,7 @@ ResultFrame.Parent = MainFrame
 local UIList = Instance.new("UIListLayout", ResultFrame)
 UIList.Padding = UDim.new(0,3)
 
--- Minimize/Close
+-- Minimize/Close Logic
 local minimized = false
 MinBtn.MouseButton1Click:Connect(function()
 	minimized = not minimized
@@ -203,10 +203,11 @@ ClearBtn.MouseButton1Click:Connect(function()
 	SearchBox.Text = ""
 end)
 
--- Auto-update ESP jika player baru masuk / keluar
+-- Auto-update ESP ketika player baru datang / pergi
 Players.PlayerAdded:Connect(function(player)
-	RunService.RenderStepped:Wait() -- tunggu character
-	performSearch()
+	player.CharacterAdded:Connect(function()
+		performSearch()
+	end)
 end)
 
 Players.PlayerRemoving:Connect(function(player)
