@@ -8,8 +8,8 @@ ScreenGui.Name = "PetFinderGUI"
 ScreenGui.Parent = game.CoreGui
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 420, 0, 360) -- diperbesar untuk tombol tambahan
-MainFrame.Position = UDim2.new(0.5, -210, 0.5, -180)
+MainFrame.Size = UDim2.new(0, 300, 0, 280) -- ukuran lebih compact
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -140)
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.Parent = ScreenGui
 MainFrame.Active = true
@@ -17,18 +17,18 @@ MainFrame.Draggable = true
 
 --// Title
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Size = UDim2.new(1, 0, 0, 30)
 Title.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-Title.Text = "Pet Finder (Backpack Scanner)"
+Title.Text = "Pet Finder"
 Title.TextColor3 = Color3.new(1,1,1)
 Title.Font = Enum.Font.SourceSansBold
-Title.TextSize = 18
+Title.TextSize = 16
 Title.Parent = MainFrame
 
 --// Close Button
 local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 40, 0, 40)
-CloseBtn.Position = UDim2.new(1, -40, 0, 0)
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -30, 0, 0)
 CloseBtn.Text = "X"
 CloseBtn.BackgroundColor3 = Color3.fromRGB(170, 50, 50)
 CloseBtn.TextColor3 = Color3.new(1,1,1)
@@ -36,8 +36,8 @@ CloseBtn.Parent = MainFrame
 
 --// Minimize Button
 local MinBtn = Instance.new("TextButton")
-MinBtn.Size = UDim2.new(0, 40, 0, 40)
-MinBtn.Position = UDim2.new(1, -80, 0, 0)
+MinBtn.Size = UDim2.new(0, 30, 0, 30)
+MinBtn.Position = UDim2.new(1, -60, 0, 0)
 MinBtn.Text = "-"
 MinBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
 MinBtn.TextColor3 = Color3.new(1,1,1)
@@ -45,9 +45,9 @@ MinBtn.Parent = MainFrame
 
 --// Search Box
 local SearchBox = Instance.new("TextBox")
-SearchBox.Size = UDim2.new(1, -20, 0, 35)
-SearchBox.Position = UDim2.new(0, 10, 0, 50)
-SearchBox.PlaceholderText = "Masukkan nama pet (contoh: rainbow frost)"
+SearchBox.Size = UDim2.new(1, -20, 0, 30)
+SearchBox.Position = UDim2.new(0, 10, 0, 40)
+SearchBox.PlaceholderText = "Nama pet..."
 SearchBox.Text = ""
 SearchBox.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 SearchBox.TextColor3 = Color3.new(1,1,1)
@@ -55,20 +55,20 @@ SearchBox.Parent = MainFrame
 
 --// Buttons Frame
 local BtnFrame = Instance.new("Frame")
-BtnFrame.Size = UDim2.new(1, -20, 0, 35)
-BtnFrame.Position = UDim2.new(0, 10, 0, 90)
+BtnFrame.Size = UDim2.new(1, -20, 0, 30)
+BtnFrame.Position = UDim2.new(0, 10, 0, 75)
 BtnFrame.BackgroundTransparency = 1
 BtnFrame.Parent = MainFrame
 
 local UIListButtons = Instance.new("UIListLayout")
 UIListButtons.FillDirection = Enum.FillDirection.Horizontal
 UIListButtons.HorizontalAlignment = Enum.HorizontalAlignment.Left
-UIListButtons.Padding = UDim.new(0, 10)
+UIListButtons.Padding = UDim.new(0, 5)
 UIListButtons.Parent = BtnFrame
 
 --// Search Button
 local SearchBtn = Instance.new("TextButton")
-SearchBtn.Size = UDim2.new(0, 190, 1, 0)
+SearchBtn.Size = UDim2.new(0, 140, 1, 0)
 SearchBtn.Text = "Search"
 SearchBtn.BackgroundColor3 = Color3.fromRGB(60, 120, 200)
 SearchBtn.TextColor3 = Color3.new(1,1,1)
@@ -76,7 +76,7 @@ SearchBtn.Parent = BtnFrame
 
 --// Clear Button
 local ClearBtn = Instance.new("TextButton")
-ClearBtn.Size = UDim2.new(0, 190, 1, 0)
+ClearBtn.Size = UDim2.new(0, 140, 1, 0)
 ClearBtn.Text = "Clear"
 ClearBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
 ClearBtn.TextColor3 = Color3.new(1,1,1)
@@ -84,15 +84,15 @@ ClearBtn.Parent = BtnFrame
 
 --// Result List
 local ResultFrame = Instance.new("ScrollingFrame")
-ResultFrame.Size = UDim2.new(1, -20, 1, -140)
-ResultFrame.Position = UDim2.new(0, 10, 0, 130)
+ResultFrame.Size = UDim2.new(1, -20, 1, -115)
+ResultFrame.Position = UDim2.new(0, 10, 0, 110)
 ResultFrame.CanvasSize = UDim2.new(0,0,0,0)
 ResultFrame.ScrollBarImageTransparency = 0
 ResultFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 ResultFrame.Parent = MainFrame
 
 local UIList = Instance.new("UIListLayout", ResultFrame)
-UIList.Padding = UDim.new(0, 5)
+UIList.Padding = UDim.new(0, 3)
 
 --// Functions
 local minimized = false
@@ -101,7 +101,7 @@ MinBtn.MouseButton1Click:Connect(function()
 	ResultFrame.Visible = not minimized
 	SearchBox.Visible = not minimized
 	BtnFrame.Visible = not minimized
-	MainFrame.Size = minimized and UDim2.new(0, 420, 0, 40) or UDim2.new(0, 420, 0, 360)
+	MainFrame.Size = minimized and UDim2.new(0, 300, 0, 30) or UDim2.new(0, 300, 0, 280)
 end)
 
 CloseBtn.MouseButton1Click:Connect(function()
@@ -119,7 +119,7 @@ end
 
 local function addResult(text)
 	local Label = Instance.new("TextLabel")
-	Label.Size = UDim2.new(1, -10, 0, 30)
+	Label.Size = UDim2.new(1, -10, 0, 25)
 	Label.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 	Label.TextWrapped = true
 	Label.TextXAlignment = Enum.TextXAlignment.Left
@@ -127,7 +127,7 @@ local function addResult(text)
 	Label.TextColor3 = Color3.new(1,1,1)
 	Label.Parent = ResultFrame
 
-	ResultFrame.CanvasSize = UDim2.new(0,0,0, UIList.AbsoluteContentSize.Y + 10)
+	ResultFrame.CanvasSize = UDim2.new(0,0,0, UIList.AbsoluteContentSize.Y + 5)
 end
 
 --// Search Logic
