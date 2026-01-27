@@ -1,72 +1,87 @@
 --// Services
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
+
+--// CLEAN OLD GUI
+local old = LocalPlayer.PlayerGui:FindFirstChild("PetFinderGUI")
+if old then old:Destroy() end
 
 --// GUI Setup
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "PetFinderGUI"
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") -- PERBAIKAN: sekarang di PlayerGui
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 300, 0, 280)
 MainFrame.Position = UDim2.new(0.5, -150, 0.5, -140)
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
 
--- Title
+--// HEADER (FIXED)
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, 30)
+Header.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Header.ZIndex = 1
+Header.Parent = MainFrame
+
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Title.Size = UDim2.new(1, -70, 1, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.BackgroundTransparency = 1
 Title.Text = "Pet Finder + ESP"
 Title.TextColor3 = Color3.new(1,1,1)
 Title.Font = Enum.Font.SourceSansBold
 Title.TextSize = 16
-Title.Parent = MainFrame
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Active = false
+Title.Selectable = false
+Title.ZIndex = 1
+Title.Parent = Header
 
--- Close / Minimize
+local MinBtn = Instance.new("TextButton")
+MinBtn.Size = UDim2.new(0, 30, 1, 0)
+MinBtn.Position = UDim2.new(1, -60, 0, 0)
+MinBtn.Text = "-"
+MinBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+MinBtn.TextColor3 = Color3.new(1,1,1)
+MinBtn.ZIndex = 5
+MinBtn.Parent = Header
+
 local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Size = UDim2.new(0, 30, 1, 0)
 CloseBtn.Position = UDim2.new(1, -30, 0, 0)
 CloseBtn.Text = "X"
 CloseBtn.BackgroundColor3 = Color3.fromRGB(170,50,50)
 CloseBtn.TextColor3 = Color3.new(1,1,1)
-CloseBtn.Parent = MainFrame
+CloseBtn.ZIndex = 5
+CloseBtn.Parent = Header
 
-local MinBtn = Instance.new("TextButton")
-MinBtn.Size = UDim2.new(0,30,0,30)
-MinBtn.Position = UDim2.new(1,-60,0,0)
-MinBtn.Text = "-"
-MinBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
-MinBtn.TextColor3 = Color3.new(1,1,1)
-MinBtn.Parent = MainFrame
-
--- Search Box
+--// Search Box
 local SearchBox = Instance.new("TextBox")
 SearchBox.Size = UDim2.new(1, -20, 0, 30)
 SearchBox.Position = UDim2.new(0, 10, 0, 40)
 SearchBox.PlaceholderText = "Nama pet..."
+SearchBox.ClearTextOnFocus = false
 SearchBox.BackgroundColor3 = Color3.fromRGB(45,45,45)
 SearchBox.TextColor3 = Color3.new(1,1,1)
 SearchBox.Parent = MainFrame
 
--- Buttons Frame
+--// Buttons
 local BtnFrame = Instance.new("Frame")
 BtnFrame.Size = UDim2.new(1, -20, 0, 30)
 BtnFrame.Position = UDim2.new(0,10,0,75)
 BtnFrame.BackgroundTransparency = 1
 BtnFrame.Parent = MainFrame
 
-local UIListButtons = Instance.new("UIListLayout")
-UIListButtons.FillDirection = Enum.FillDirection.Horizontal
-UIListButtons.HorizontalAlignment = Enum.HorizontalAlignment.Left
-UIListButtons.Padding = UDim.new(0,5)
-UIListButtons.Parent = BtnFrame
+local layoutBtn = Instance.new("UIListLayout", BtnFrame)
+layoutBtn.FillDirection = Enum.FillDirection.Horizontal
+layoutBtn.Padding = UDim.new(0,5)
 
--- Search Button
 local SearchBtn = Instance.new("TextButton")
 SearchBtn.Size = UDim2.new(0,140,1,0)
 SearchBtn.Text = "Search"
@@ -74,7 +89,6 @@ SearchBtn.BackgroundColor3 = Color3.fromRGB(60,120,200)
 SearchBtn.TextColor3 = Color3.new(1,1,1)
 SearchBtn.Parent = BtnFrame
 
--- Clear Button
 local ClearBtn = Instance.new("TextButton")
 ClearBtn.Size = UDim2.new(0,140,1,0)
 ClearBtn.Text = "Clear"
@@ -82,7 +96,7 @@ ClearBtn.BackgroundColor3 = Color3.fromRGB(150,50,50)
 ClearBtn.TextColor3 = Color3.new(1,1,1)
 ClearBtn.Parent = BtnFrame
 
--- Result Frame
+--// Result List
 local ResultFrame = Instance.new("ScrollingFrame")
 ResultFrame.Size = UDim2.new(1,-20,1,-115)
 ResultFrame.Position = UDim2.new(0,10,0,110)
@@ -94,7 +108,93 @@ ResultFrame.Parent = MainFrame
 local UIList = Instance.new("UIListLayout", ResultFrame)
 UIList.Padding = UDim.new(0,3)
 
--- Minimize/Close Logic
+--// ESP STORAGE
+local ESPs = {}
+
+local function clearESPs()
+	for _,d in pairs(ESPs) do
+		if d.highlight then d.highlight:Destroy() end
+		if d.beam then d.beam:Destroy() end
+		if d.att0 then d.att0:Destroy() end
+		if d.att1 then d.att1:Destroy() end
+	end
+	table.clear(ESPs)
+end
+
+local function createESP(player)
+	if ESPs[player] or not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
+
+	local hrp = player.Character.HumanoidRootPart
+
+	local hl = Instance.new("Highlight")
+	hl.Adornee = player.Character
+	hl.FillColor = Color3.fromRGB(0,255,0)
+	hl.FillTransparency = 0.5
+	hl.OutlineColor = Color3.fromRGB(0,255,0)
+	hl.Parent = player.Character
+
+	local att0 = Instance.new("Attachment", Workspace.CurrentCamera)
+	local att1 = Instance.new("Attachment", hrp)
+	att1.Position = Vector3.new(0,3,0)
+
+	local beam = Instance.new("Beam")
+	beam.Attachment0 = att0
+	beam.Attachment1 = att1
+	beam.Width0 = 0.1
+	beam.Width1 = 0.1
+	beam.Color = ColorSequence.new(Color3.fromRGB(0,255,0))
+	beam.FaceCamera = true
+	beam.Parent = hrp
+
+	ESPs[player] = {highlight=hl, beam=beam, att0=att0, att1=att1}
+end
+
+local function clearResults()
+	for _,v in ipairs(ResultFrame:GetChildren()) do
+		if v:IsA("TextLabel") then v:Destroy() end
+	end
+	ResultFrame.CanvasSize = UDim2.new(0,0,0,0)
+	clearESPs()
+end
+
+local function addResult(txt)
+	local lbl = Instance.new("TextLabel")
+	lbl.Size = UDim2.new(1,-10,0,25)
+	lbl.BackgroundColor3 = Color3.fromRGB(50,50,50)
+	lbl.TextWrapped = true
+	lbl.TextXAlignment = Enum.TextXAlignment.Left
+	lbl.Text = txt
+	lbl.TextColor3 = Color3.new(1,1,1)
+	lbl.Parent = ResultFrame
+	ResultFrame.CanvasSize = UDim2.new(0,0,0,UIList.AbsoluteContentSize.Y+5)
+end
+
+--// SEARCH LOGIC (DEX STYLE)
+local function performSearch()
+	clearResults()
+	local key = string.lower(SearchBox.Text)
+	if key == "" then return end
+
+	for _,plr in ipairs(Players:GetPlayers()) do
+		local bp = plr:FindFirstChild("Backpack")
+		if bp then
+			for _,item in ipairs(bp:GetChildren()) do
+				if string.find(string.lower(item.Name), key) then
+					addResult("Player: "..plr.Name.." | Pet: "..item.Name)
+					createESP(plr)
+				end
+			end
+		end
+	end
+end
+
+--// BUTTON EVENTS
+SearchBtn.MouseButton1Click:Connect(performSearch)
+ClearBtn.MouseButton1Click:Connect(function()
+	SearchBox.Text = ""
+	clearResults()
+end)
+
 local minimized = false
 MinBtn.MouseButton1Click:Connect(function()
 	minimized = not minimized
@@ -103,120 +203,9 @@ MinBtn.MouseButton1Click:Connect(function()
 	BtnFrame.Visible = not minimized
 	MainFrame.Size = minimized and UDim2.new(0,300,0,30) or UDim2.new(0,300,0,280)
 end)
+
 CloseBtn.MouseButton1Click:Connect(function()
 	clearResults()
 	clearESPs()
 	ScreenGui:Destroy()
-end)
-
--- Functions
-local ESPs = {}
-
-local function createESP(targetPlayer)
-	if not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
-	if ESPs[targetPlayer] then return end
-	local hrp = targetPlayer.Character.HumanoidRootPart
-	
-	-- Highlight
-	local highlight = Instance.new("Highlight")
-	highlight.Adornee = targetPlayer.Character
-	highlight.FillColor = Color3.fromRGB(0,255,0)
-	highlight.FillTransparency = 0.5
-	highlight.OutlineColor = Color3.fromRGB(0,255,0)
-	highlight.OutlineTransparency = 0
-	highlight.Parent = targetPlayer.Character
-	
-	-- Beam
-	local att0 = Instance.new("Attachment")
-	att0.Position = Vector3.new(0,0,0)
-	att0.Parent = workspace.CurrentCamera
-	
-	local att1 = Instance.new("Attachment")
-	att1.Position = Vector3.new(0,3,0)
-	att1.Parent = hrp
-	
-	local beam = Instance.new("Beam")
-	beam.Attachment0 = att0
-	beam.Attachment1 = att1
-	beam.Color = ColorSequence.new(Color3.fromRGB(0,255,0))
-	beam.Width0 = 0.1
-	beam.Width1 = 0.1
-	beam.FaceCamera = true
-	beam.Parent = hrp
-	
-	ESPs[targetPlayer] = {highlight=highlight, beam=beam, att0=att0, att1=att1}
-end
-
-local function clearESPs()
-	for player,data in pairs(ESPs) do
-		if data.highlight then data.highlight:Destroy() end
-		if data.beam then data.beam:Destroy() end
-		if data.att0 then data.att0:Destroy() end
-		if data.att1 then data.att1:Destroy() end
-	end
-	ESPs = {}
-end
-
-local function clearResults()
-	for _, v in pairs(ResultFrame:GetChildren()) do
-		if v:IsA("TextLabel") then
-			v:Destroy()
-		end
-	end
-	ResultFrame.CanvasSize = UDim2.new(0,0,0,0)
-	clearESPs()
-end
-
-local function addResult(text)
-	local Label = Instance.new("TextLabel")
-	Label.Size = UDim2.new(1,-10,0,25)
-	Label.BackgroundColor3 = Color3.fromRGB(50,50,50)
-	Label.TextWrapped = true
-	Label.TextXAlignment = Enum.TextXAlignment.Left
-	Label.Text = text
-	Label.TextColor3 = Color3.new(1,1,1)
-	Label.Parent = ResultFrame
-	ResultFrame.CanvasSize = UDim2.new(0,0,0, UIList.AbsoluteContentSize.Y + 5)
-end
-
--- Search
-local function performSearch()
-	clearResults()
-	local keyword = string.lower(SearchBox.Text)
-	if keyword == "" then return end
-	for _, player in pairs(Players:GetPlayers()) do
-		local backpack = player:FindFirstChild("Backpack")
-		if backpack then
-			for _, item in pairs(backpack:GetChildren()) do
-				if string.find(string.lower(item.Name), keyword) then
-					addResult("Player: "..player.Name.." | Pet: "..item.Name)
-					createESP(player)
-				end
-			end
-		end
-	end
-end
-
-SearchBtn.MouseButton1Click:Connect(performSearch)
-ClearBtn.MouseButton1Click:Connect(function()
-	clearResults()
-	SearchBox.Text = ""
-end)
-
--- Auto-update ESP ketika player baru datang / pergi
-Players.PlayerAdded:Connect(function(player)
-	player.CharacterAdded:Connect(function()
-		performSearch()
-	end)
-end)
-
-Players.PlayerRemoving:Connect(function(player)
-	if ESPs[player] then
-		local data = ESPs[player]
-		if data.highlight then data.highlight:Destroy() end
-		if data.beam then data.beam:Destroy() end
-		if data.att0 then data.att0:Destroy() end
-		if data.att1 then data.att1:Destroy() end
-		ESPs[player] = nil
-	end
 end)
