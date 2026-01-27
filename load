@@ -1,27 +1,23 @@
--- PET FINDER + ESP | FINAL STABLE VERSION (Delta Safe)
-
+--// SERVICES
 local Players = game:GetService("Players")
-local player = Players.LocalPlayer
+local LocalPlayer = Players.LocalPlayer
 
--- Hapus GUI lama
-local old = player.PlayerGui:FindFirstChild("PetFinderGUI")
-if old then old:Destroy() end
-
--- GUI
-local gui = Instance.new("ScreenGui", player.PlayerGui)
+--// GUI ROOT (FIX CLOSE)
+local gui = Instance.new("ScreenGui")
 gui.Name = "PetFinderGUI"
 gui.ResetOnSpawn = false
+gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- MAIN FRAME
+--// MAIN FRAME
 local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(0,360,0,300)
-main.Position = UDim2.new(0.35,0,0.25,0)
-main.BackgroundColor3 = Color3.fromRGB(25,25,25)
+main.Size = UDim2.new(0,300,0,280)
+main.Position = UDim2.new(0.5,-150,0.5,-140)
+main.BackgroundColor3 = Color3.fromRGB(30,30,30)
 main.BorderSizePixel = 0
 main.Active = true
 main.Draggable = true
 
--- HEADER
+--// HEADER
 local header = Instance.new("Frame", main)
 header.Size = UDim2.new(1,0,0,30)
 header.BackgroundColor3 = Color3.fromRGB(40,40,40)
@@ -29,14 +25,13 @@ header.BackgroundColor3 = Color3.fromRGB(40,40,40)
 local title = Instance.new("TextLabel", header)
 title.Size = UDim2.new(1,-70,1,0)
 title.Position = UDim2.new(0,8,0,0)
-title.Text = "Pet Finder + ESP"
-title.TextColor3 = Color3.new(1,1,1)
+title.Text = "Pet Finder"
 title.Font = Enum.Font.GothamBold
-title.TextSize = 13
+title.TextSize = 14
+title.TextColor3 = Color3.new(1,1,1)
 title.BackgroundTransparency = 1
 title.TextXAlignment = Enum.TextXAlignment.Left
 
--- HEADER BUTTON MAKER (PENTING)
 local function headBtn(txt,x,col)
 	local b = Instance.new("TextButton", header)
 	b.Size = UDim2.new(0,30,1,0)
@@ -46,151 +41,118 @@ local function headBtn(txt,x,col)
 	b.TextSize = 14
 	b.TextColor3 = Color3.new(1,1,1)
 	b.BackgroundColor3 = col
-	b.BorderSizePixel = 0
 	return b
 end
 
-local minBtn   = headBtn("-", -60, Color3.fromRGB(90,90,90))
-local closeBtn = headBtn("X", -30, Color3.fromRGB(170,70,70))
+local closeBtn = headBtn("X",-30,Color3.fromRGB(170,70,70))
 
--- ICON (MINIMIZE MODE)
-local icon = Instance.new("TextButton", gui)
-icon.Size = UDim2.new(0,45,0,45)
-icon.Position = UDim2.new(0,10,0.45,0)
-icon.Text = "PET"
-icon.Visible = false
-icon.BackgroundColor3 = Color3.fromRGB(45,45,45)
-icon.TextColor3 = Color3.new(1,1,1)
-icon.Active = true
-icon.Draggable = true
-
--- MIN / RESTORE
-minBtn.MouseButton1Click:Connect(function()
-	main.Visible = false
-	icon.Visible = true
-end)
-
-icon.MouseButton1Click:Connect(function()
-	main.Visible = true
-	icon.Visible = false
-end)
-
--- CLOSE (100% WORK)
 closeBtn.MouseButton1Click:Connect(function()
 	gui:Destroy()
 end)
 
--- SEARCH BOX
+--// SEARCH BOX
 local searchBox = Instance.new("TextBox", main)
-searchBox.Position = UDim2.new(0,10,0,45)
-searchBox.Size = UDim2.new(1,-20,0,28)
-searchBox.PlaceholderText = "Nama pet (contoh: Rainbow Frost)"
+searchBox.Size = UDim2.new(1,-20,0,30)
+searchBox.Position = UDim2.new(0,10,0,40)
+searchBox.PlaceholderText = "Nama pet..."
 searchBox.Text = ""
-searchBox.Font = Enum.Font.Gotham
-searchBox.TextSize = 13
+searchBox.BackgroundColor3 = Color3.fromRGB(45,45,45)
 searchBox.TextColor3 = Color3.new(1,1,1)
-searchBox.BackgroundColor3 = Color3.fromRGB(35,35,35)
-searchBox.BorderColor3 = Color3.fromRGB(80,80,80)
+searchBox.ClearTextOnFocus = false
 
--- BUTTONS
+--// BUTTONS
 local searchBtn = Instance.new("TextButton", main)
-searchBtn.Size = UDim2.new(0,160,0,26)
-searchBtn.Position = UDim2.new(0,10,0,80)
-searchBtn.Text = "SEARCH"
-searchBtn.Font = Enum.Font.GothamBold
-searchBtn.TextSize = 12
-searchBtn.TextColor3 = Color3.new(1,1,1)
+searchBtn.Size = UDim2.new(0.45,0,0,30)
+searchBtn.Position = UDim2.new(0.05,0,0,75)
+searchBtn.Text = "Search"
 searchBtn.BackgroundColor3 = Color3.fromRGB(60,120,200)
+searchBtn.TextColor3 = Color3.new(1,1,1)
 
 local clearBtn = Instance.new("TextButton", main)
-clearBtn.Size = UDim2.new(0,160,0,26)
-clearBtn.Position = UDim2.new(0,190,0,80)
-clearBtn.Text = "CLEAR"
-clearBtn.Font = Enum.Font.GothamBold
-clearBtn.TextSize = 12
-clearBtn.TextColor3 = Color3.new(1,1,1)
+clearBtn.Size = UDim2.new(0.45,0,0,30)
+clearBtn.Position = UDim2.new(0.5,0,0,75)
+clearBtn.Text = "Clear"
 clearBtn.BackgroundColor3 = Color3.fromRGB(150,50,50)
+clearBtn.TextColor3 = Color3.new(1,1,1)
 
--- RESULT LIST
-local result = Instance.new("ScrollingFrame", main)
-result.Position = UDim2.new(0,10,0,115)
-result.Size = UDim2.new(1,-20,1,-125)
-result.CanvasSize = UDim2.new(0,0,0,0)
-result.ScrollBarImageTransparency = 0
-result.BackgroundColor3 = Color3.fromRGB(30,30,30)
-result.BorderColor3 = Color3.fromRGB(80,80,80)
+--// RESULT LIST
+local resultFrame = Instance.new("ScrollingFrame", main)
+resultFrame.Position = UDim2.new(0,10,0,115)
+resultFrame.Size = UDim2.new(1,-20,1,-125)
+resultFrame.CanvasSize = UDim2.new(0,0,0,0)
+resultFrame.ScrollBarImageTransparency = 0
+resultFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
 
-local layout = Instance.new("UIListLayout", result)
-layout.Padding = UDim.new(0,4)
+local list = Instance.new("UIListLayout", resultFrame)
+list.Padding = UDim.new(0,4)
 
--- ESP STORAGE
-local ESPs = {}
+--// ESP STORAGE
+local activeHighlights = {}
 
 local function clearESP()
-	for _,h in pairs(ESPs) do
-		if h then h:Destroy() end
+	for _,h in pairs(activeHighlights) do
+		if h and h.Parent then
+			h:Destroy()
+		end
 	end
-	ESPs = {}
+	table.clear(activeHighlights)
 end
 
 local function clearResults()
-	for _,v in pairs(result:GetChildren()) do
-		if v:IsA("TextLabel") then v:Destroy() end
+	for _,v in pairs(resultFrame:GetChildren()) do
+		if v:IsA("TextLabel") then
+			v:Destroy()
+		end
 	end
-	result.CanvasSize = UDim2.new(0,0,0,0)
+	resultFrame.CanvasSize = UDim2.new(0,0,0,0)
 	clearESP()
 end
 
--- ADD RESULT
-local function add(text)
-	local l = Instance.new("TextLabel", result)
-	l.Size = UDim2.new(1,-10,0,24)
-	l.BackgroundColor3 = Color3.fromRGB(45,45,45)
-	l.TextXAlignment = Left
-	l.TextWrapped = true
-	l.Font = Enum.Font.Gotham
-	l.TextSize = 12
-	l.TextColor3 = Color3.new(1,1,1)
-	l.Text = text
-	result.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y + 6)
+local function addResult(txt)
+	local lbl = Instance.new("TextLabel", resultFrame)
+	lbl.Size = UDim2.new(1,-8,0,26)
+	lbl.BackgroundColor3 = Color3.fromRGB(50,50,50)
+	lbl.TextWrapped = true
+	lbl.TextXAlignment = Enum.TextXAlignment.Left
+	lbl.Text = txt
+	lbl.TextColor3 = Color3.new(1,1,1)
+	lbl.Font = Enum.Font.Gotham
+	lbl.TextSize = 12
+
+	resultFrame.CanvasSize = UDim2.new(0,0,0,list.AbsoluteContentSize.Y+6)
 end
 
--- CREATE HIGHLIGHT
-local function mark(plr)
-	if ESPs[plr] then return end
-	if not plr.Character then return end
-
-	local h = Instance.new("Highlight")
-	h.Adornee = plr.Character
-	h.FillColor = Color3.fromRGB(0,255,0)
-	h.FillTransparency = 0.5
-	h.OutlineColor = Color3.fromRGB(0,255,0)
-	h.Parent = plr.Character
-
-	ESPs[plr] = h
-end
-
--- SEARCH LOGIC
-local function search()
+--// SEARCH LOGIC (DEX STYLE)
+local function performSearch()
 	clearResults()
-	local key = searchBox.Text:lower()
-	if key == "" then return end
+	local keyword = string.lower(searchBox.Text)
+	if keyword == "" then return end
 
-	for _,plr in pairs(Players:GetPlayers()) do
-		local bp = plr:FindFirstChild("Backpack")
-		if bp then
-			for _,it in pairs(bp:GetChildren()) do
-				if it.Name:lower():find(key) then
-					add("Player: "..plr.Name.." | Pet: "..it.Name)
-					mark(plr)
+	for _,plr in ipairs(Players:GetPlayers()) do
+		if plr ~= LocalPlayer then
+			local backpack = plr:FindFirstChild("Backpack")
+			if backpack then
+				for _,item in ipairs(backpack:GetChildren()) do
+					if string.find(string.lower(item.Name), keyword) then
+						addResult("Player: "..plr.Name.." | Pet: "..item.Name)
+
+						-- ESP HIGHLIGHT
+						if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+							if not activeHighlights[plr] then
+								local hl = Instance.new("Highlight")
+								hl.FillColor = Color3.fromRGB(0,255,0)
+								hl.OutlineColor = Color3.fromRGB(0,0,0)
+								hl.FillTransparency = 0.3
+								hl.Parent = plr.Character
+								activeHighlights[plr] = hl
+							end
+						end
+					end
 				end
 			end
 		end
 	end
 end
 
-searchBtn.MouseButton1Click:Connect(search)
-clearBtn.MouseButton1Click:Connect(function()
-	searchBox.Text = ""
-	clearResults()
-end)
+searchBtn.MouseButton1Click:Connect(performSearch)
+clearBtn.MouseButton1Click:Connect(clearResults)
