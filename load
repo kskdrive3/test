@@ -3,36 +3,33 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
 
---// SAVE LAST SEARCH (SESSION BASED)
-getgenv().LastPetSearch = getgenv().LastPetSearch or ""
+--// GLOBAL SAVE (STABLE)
+_G.LastPetSearch = _G.LastPetSearch or ""
 
---// CLEAN OLD GUI
+--// REMOVE OLD GUI
 local old = LocalPlayer.PlayerGui:FindFirstChild("PetFinderGUI")
 if old then old:Destroy() end
 
---// GUI Setup
+--// GUI
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "PetFinderGUI"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.Parent = LocalPlayer.PlayerGui
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0,300,0,280)
 MainFrame.Position = UDim2.new(0.5,-150,0.5,-140)
 MainFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
-MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
 
---// HEADER (FIXED CLOSE)
-local Header = Instance.new("Frame")
+--// HEADER
+local Header = Instance.new("Frame", MainFrame)
 Header.Size = UDim2.new(1,0,0,30)
 Header.BackgroundColor3 = Color3.fromRGB(20,20,20)
-Header.ZIndex = 1
-Header.Parent = MainFrame
 
-local Title = Instance.new("TextLabel")
+local Title = Instance.new("TextLabel", Header)
 Title.Size = UDim2.new(1,-70,1,0)
 Title.Position = UDim2.new(0,10,0,0)
 Title.BackgroundTransparency = 1
@@ -40,87 +37,77 @@ Title.Text = "Pet Finder + ESP"
 Title.TextColor3 = Color3.new(1,1,1)
 Title.Font = Enum.Font.SourceSansBold
 Title.TextSize = 16
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Active = false
-Title.Selectable = false
-Title.ZIndex = 1
-Title.Parent = Header
+Title.TextXAlignment = Left
 
-local MinBtn = Instance.new("TextButton")
+local MinBtn = Instance.new("TextButton", Header)
 MinBtn.Size = UDim2.new(0,30,1,0)
 MinBtn.Position = UDim2.new(1,-60,0,0)
 MinBtn.Text = "-"
 MinBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
 MinBtn.TextColor3 = Color3.new(1,1,1)
-MinBtn.ZIndex = 5
-MinBtn.Parent = Header
 
-local CloseBtn = Instance.new("TextButton")
+local CloseBtn = Instance.new("TextButton", Header)
 CloseBtn.Size = UDim2.new(0,30,1,0)
 CloseBtn.Position = UDim2.new(1,-30,0,0)
 CloseBtn.Text = "X"
 CloseBtn.BackgroundColor3 = Color3.fromRGB(170,50,50)
 CloseBtn.TextColor3 = Color3.new(1,1,1)
-CloseBtn.ZIndex = 5
-CloseBtn.Parent = Header
 
 --// SEARCH BOX
-local SearchBox = Instance.new("TextBox")
+local SearchBox = Instance.new("TextBox", MainFrame)
 SearchBox.Size = UDim2.new(1,-20,0,30)
 SearchBox.Position = UDim2.new(0,10,0,40)
 SearchBox.PlaceholderText = "Nama pet..."
 SearchBox.ClearTextOnFocus = false
 SearchBox.BackgroundColor3 = Color3.fromRGB(45,45,45)
 SearchBox.TextColor3 = Color3.new(1,1,1)
-SearchBox.Text = getgenv().LastPetSearch
-SearchBox.Parent = MainFrame
+SearchBox.Text = _G.LastPetSearch
+
+-- AUTO SAVE SAAT MENGETIK
+SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+	_G.LastPetSearch = SearchBox.Text
+end)
 
 --// BUTTONS
-local BtnFrame = Instance.new("Frame")
+local BtnFrame = Instance.new("Frame", MainFrame)
 BtnFrame.Size = UDim2.new(1,-20,0,30)
 BtnFrame.Position = UDim2.new(0,10,0,75)
 BtnFrame.BackgroundTransparency = 1
-BtnFrame.Parent = MainFrame
 
-local BtnLayout = Instance.new("UIListLayout", BtnFrame)
-BtnLayout.FillDirection = Enum.FillDirection.Horizontal
-BtnLayout.Padding = UDim.new(0,5)
+local UIListBtn = Instance.new("UIListLayout", BtnFrame)
+UIListBtn.FillDirection = Horizontal
+UIListBtn.Padding = UDim.new(0,5)
 
-local SearchBtn = Instance.new("TextButton")
+local SearchBtn = Instance.new("TextButton", BtnFrame)
 SearchBtn.Size = UDim2.new(0,140,1,0)
 SearchBtn.Text = "Search"
 SearchBtn.BackgroundColor3 = Color3.fromRGB(60,120,200)
 SearchBtn.TextColor3 = Color3.new(1,1,1)
-SearchBtn.Parent = BtnFrame
 
-local ClearBtn = Instance.new("TextButton")
+local ClearBtn = Instance.new("TextButton", BtnFrame)
 ClearBtn.Size = UDim2.new(0,140,1,0)
 ClearBtn.Text = "Clear"
 ClearBtn.BackgroundColor3 = Color3.fromRGB(150,50,50)
 ClearBtn.TextColor3 = Color3.new(1,1,1)
-ClearBtn.Parent = BtnFrame
 
---// RESULT LIST
-local ResultFrame = Instance.new("ScrollingFrame")
+--// RESULT
+local ResultFrame = Instance.new("ScrollingFrame", MainFrame)
 ResultFrame.Size = UDim2.new(1,-20,1,-115)
 ResultFrame.Position = UDim2.new(0,10,0,110)
-ResultFrame.CanvasSize = UDim2.new(0,0,0,0)
-ResultFrame.ScrollBarImageTransparency = 0
 ResultFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
-ResultFrame.Parent = MainFrame
+ResultFrame.CanvasSize = UDim2.new(0,0,0,0)
 
 local UIList = Instance.new("UIListLayout", ResultFrame)
 UIList.Padding = UDim.new(0,3)
 
---// ESP STORAGE
+--// ESP
 local ESPs = {}
 
 local function clearESPs()
 	for _,d in pairs(ESPs) do
-		if d.highlight then d.highlight:Destroy() end
-		if d.beam then d.beam:Destroy() end
-		if d.att0 then d.att0:Destroy() end
-		if d.att1 then d.att1:Destroy() end
+		for _,v in pairs(d) do
+			if v then v:Destroy() end
+		end
 	end
 	table.clear(ESPs)
 end
@@ -129,27 +116,23 @@ local function createESP(plr)
 	if ESPs[plr] or not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then return end
 	local hrp = plr.Character.HumanoidRootPart
 
-	local hl = Instance.new("Highlight")
-	hl.Adornee = plr.Character
+	local hl = Instance.new("Highlight", plr.Character)
 	hl.FillColor = Color3.fromRGB(0,255,0)
 	hl.FillTransparency = 0.5
-	hl.OutlineColor = Color3.fromRGB(0,255,0)
-	hl.Parent = plr.Character
 
-	local att0 = Instance.new("Attachment", Workspace.CurrentCamera)
-	local att1 = Instance.new("Attachment", hrp)
-	att1.Position = Vector3.new(0,3,0)
+	local a0 = Instance.new("Attachment", Workspace.CurrentCamera)
+	local a1 = Instance.new("Attachment", hrp)
+	a1.Position = Vector3.new(0,3,0)
 
-	local beam = Instance.new("Beam")
-	beam.Attachment0 = att0
-	beam.Attachment1 = att1
+	local beam = Instance.new("Beam", hrp)
+	beam.Attachment0 = a0
+	beam.Attachment1 = a1
 	beam.Width0 = 0.1
 	beam.Width1 = 0.1
-	beam.Color = ColorSequence.new(Color3.fromRGB(0,255,0))
 	beam.FaceCamera = true
-	beam.Parent = hrp
+	beam.Color = ColorSequence.new(Color3.fromRGB(0,255,0))
 
-	ESPs[plr] = {highlight=hl, beam=beam, att0=att0, att1=att1}
+	ESPs[plr] = {hl,a0,a1,beam}
 end
 
 local function clearResults()
@@ -161,64 +144,48 @@ local function clearResults()
 end
 
 local function addResult(txt)
-	local lbl = Instance.new("TextLabel")
-	lbl.Size = UDim2.new(1,-10,0,25)
-	lbl.BackgroundColor3 = Color3.fromRGB(50,50,50)
-	lbl.TextWrapped = true
-	lbl.TextXAlignment = Enum.TextXAlignment.Left
-	lbl.Text = txt
-	lbl.TextColor3 = Color3.new(1,1,1)
-	lbl.Parent = ResultFrame
+	local l = Instance.new("TextLabel", ResultFrame)
+	l.Size = UDim2.new(1,-10,0,25)
+	l.BackgroundColor3 = Color3.fromRGB(50,50,50)
+	l.TextXAlignment = Left
+	l.TextWrapped = true
+	l.Text = txt
+	l.TextColor3 = Color3.new(1,1,1)
 	ResultFrame.CanvasSize = UDim2.new(0,0,0,UIList.AbsoluteContentSize.Y+5)
 end
 
---// SEARCH LOGIC
 local function performSearch()
 	clearResults()
 	local key = string.lower(SearchBox.Text)
 	if key == "" then return end
 
-	for _,plr in ipairs(Players:GetPlayers()) do
-		local bp = plr:FindFirstChild("Backpack")
+	for _,p in ipairs(Players:GetPlayers()) do
+		local bp = p:FindFirstChild("Backpack")
 		if bp then
-			for _,item in ipairs(bp:GetChildren()) do
-				if string.find(string.lower(item.Name), key) then
-					addResult("Player: "..plr.Name.." | Pet: "..item.Name)
-					createESP(plr)
+			for _,i in ipairs(bp:GetChildren()) do
+				if string.find(string.lower(i.Name), key) then
+					addResult("Player: "..p.Name.." | Pet: "..i.Name)
+					createESP(p)
 				end
 			end
 		end
 	end
 end
 
---// BUTTON EVENTS
-SearchBtn.MouseButton1Click:Connect(function()
-	getgenv().LastPetSearch = SearchBox.Text
-	performSearch()
-end)
+SearchBtn.MouseButton1Click:Connect(performSearch)
 
 ClearBtn.MouseButton1Click:Connect(function()
-	getgenv().LastPetSearch = ""
+	_G.LastPetSearch = ""
 	SearchBox.Text = ""
 	clearResults()
 end)
 
-local minimized = false
-MinBtn.MouseButton1Click:Connect(function()
-	minimized = not minimized
-	ResultFrame.Visible = not minimized
-	SearchBox.Visible = not minimized
-	BtnFrame.Visible = not minimized
-	MainFrame.Size = minimized and UDim2.new(0,300,0,30) or UDim2.new(0,300,0,280)
-end)
-
 CloseBtn.MouseButton1Click:Connect(function()
 	clearResults()
-	clearESPs()
 	ScreenGui:Destroy()
 end)
 
---// AUTO SEARCH ON OPEN
-if getgenv().LastPetSearch ~= "" then
+-- AUTO SEARCH SAAT GUI DIBUKA
+if _G.LastPetSearch ~= "" then
 	task.delay(0.2, performSearch)
 end
