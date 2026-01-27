@@ -21,6 +21,7 @@ main.Draggable = true
 local header = Instance.new("Frame", main)
 header.Size = UDim2.new(1,0,0,30)
 header.BackgroundColor3 = Color3.fromRGB(40,40,40)
+header.ZIndex = 1
 
 local title = Instance.new("TextLabel", header)
 title.Size = UDim2.new(1,-70,1,0)
@@ -31,6 +32,9 @@ title.TextSize = 14
 title.TextColor3 = Color3.new(1,1,1)
 title.BackgroundTransparency = 1
 title.TextXAlignment = Enum.TextXAlignment.Left
+title.Active = false
+title.Selectable = false
+title.ZIndex = 1
 
 local function headBtn(txt,x,col)
 	local b = Instance.new("TextButton", header)
@@ -41,14 +45,15 @@ local function headBtn(txt,x,col)
 	b.TextSize = 14
 	b.TextColor3 = Color3.new(1,1,1)
 	b.BackgroundColor3 = col
+	b.ZIndex = 5
 	return b
 end
 
 local closeBtn = headBtn("X",-30,Color3.fromRGB(170,70,70))
-
 closeBtn.MouseButton1Click:Connect(function()
 	gui:Destroy()
 end)
+
 
 --// SEARCH BOX
 local searchBox = Instance.new("TextBox", main)
